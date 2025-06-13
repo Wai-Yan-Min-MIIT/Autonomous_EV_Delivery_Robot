@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real-Time Video Monitoring</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        #video-frame {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Real-Time Video Monitoring</h1>
+    <img id="video-frame" src="" alt="Video Frame">
+    <script>
+        // Use the IP address passed from the Flask server
+        const ipAddress = "{{ ip_address }}";
+        const socket = io.connect('http://' + ipAddress + ':5000');
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            // Request frames every 100ms
+            setInterval(() => {
+                socket.emit('request_frame');
+            }, 100);
+        });
+
+        socket.on('frame', (frameData) => {
+            const videoFrame = document.getElementById('video-frame');
+            videoFrame.src = 'data:image/jpeg;base64,' + frameData;  // Update image source
+        });
+    </script>
+</body>
+</html>

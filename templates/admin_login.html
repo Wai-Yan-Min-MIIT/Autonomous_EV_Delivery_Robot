@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - EV Delivery Robot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script>
+        async function adminLogin(event) {
+            event.preventDefault(); // 🆕 Prevent default form submission
+            const email = document.getElementById("admin_email").value;
+            const password = document.getElementById("admin_password").value;
+            const res = await fetch('/admin-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (data.message === "Admin login successful!") {
+                window.location.href = "/admin";
+            } else {
+                alert(data.error);
+            }
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>EV Delivery Robot - Admin Login</h1>
+    </header>
+    <main>
+        <div class="container">
+            <div class="card">
+                <h2>Admin Login</h2>
+                <form onsubmit="adminLogin(event)"> <!-- 🆕 Add form with onsubmit -->
+                    <input type="email" id="admin_email" placeholder="Enter Admin Email" required>
+                    <input type="password" id="admin_password" placeholder="Enter Admin Password" required>
+                    <button type="submit">Login</button> <!-- 🆕 Change to type="submit" -->
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

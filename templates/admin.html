@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - EV Delivery Robot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* Additional styles for the admin table */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 8px; /* Rounded corners */
+            overflow: hidden; /* Ensure rounded corners apply to content */
+        }
+        .admin-table th, .admin-table td {
+            padding: 15px 20px; /* Increased padding for better spacing */
+            text-align: center; /* Center-align text */
+            border-bottom: 1px solid #ddd;
+            font-size: 1rem; /* Slightly larger font */
+        }
+        .admin-table th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase; /* Uppercase headers */
+            letter-spacing: 0.5px; /* Slight letter spacing for readability */
+        }
+        /* Wider columns */
+        .admin-table th:nth-child(1), .admin-table td:nth-child(1) { /* User Email */
+            width: 30%; /* Wider email column */
+        }
+        .admin-table th:nth-child(2), .admin-table td:nth-child(2) { /* Order Time */
+            width: 30%; /* Wider timestamp column */
+        }
+        .admin-table th:nth-child(3), .admin-table td:nth-child(3) { /* Passcode */
+            width: 20%;
+        }
+        .admin-table th:nth-child(4), .admin-table td:nth-child(4) { /* Status */
+            width: 20%;
+        }
+        .admin-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .admin-table .placeholder {
+            color: #999;
+            font-style: italic;
+            text-align: center;
+        }
+        .admin-table .placeholder-row {
+            background-color: #fafafa;
+        }
+        .clear-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .clear-button:hover {
+            background-color: #45a049;
+        }
+        .error-message {
+            color: #d32f2f;
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Admin Dashboard - EV Delivery Robot</h1>
+        <a href="{{ url_for('admin_logout') }}" style="color: white; position: absolute; top: 20px; right: 20px;">Logout</a>
+    </header>
+    <main>
+        <div class="container">
+            <div class="card" id="admin_section">
+                <h2>Order History</h2>
+                <button class="clear-button" onclick="clearCompleted()">Clear Completed Deliveries</button>
+                <table class="admin-table" id="orders-table">
+                    <thead>
+                        <tr>
+                            <th>User Email</th>
+                            <th>Order Time</th>
+                            <th>Passcode</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-body">
+                        <!-- Initial placeholder rows -->
+                        {% for i in range(5) %}
+                        <tr class="placeholder-row">
+                            <td class="placeholder" colspan="4">No orders yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div id="error-message" class="error-message" style="display: none;"></div>
+            </div>
+        </div>
+    </main>
+    <script>
+        function fetchOrders() {
+            fetch('/admin/get-orders')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch orders: ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(orders => {
+                    console.log('Fetched orders:', orders); // Debug log
+                    const tbody = document.getElementById('orders-body');
+                    const errorDiv = document.getElementById('error-message');
+                    errorDiv.style.display = 'none'; // Hide error message
+                    tbody.innerHTML = ''; // Clear previous content
+
+                    if (!orders || orders.length === 0) {
+                        // Show 5 placeholder rows when empty
+                        for (let i = 0; i < 5; i++) {
+                            const row = document.createElement('tr');
+                            row.classList.add('placeholder-row');
+                            row.innerHTML = `
+                                <td class="placeholder" colspan="4">No orders yet</td>
+                            `;
+                            tbody.appendChild(row);
+                        }
+                        return;
+                    }
+
+                    // Render actual orders
+                    orders.forEach(order => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${order.email}</td>
+                            <td>${order.timestamp}</td>
+                            <td>******</td>  <!-- Hide passcode for security -->
+                            <td class="${order.status === 'Completed' ? 'completed' : 'pending'}">
+                                ${order.status}
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('⚠ Error fetching orders:', error);
+                    const errorDiv = document.getElementById('error-message');
+                    errorDiv.innerText = 'Error fetching orders: ' + error.message;
+                    errorDiv.style.display = 'block';
+                });
+        }
+
+        function clearCompleted() {
+            fetch('/admin/clear-completed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    fetchOrders(); // Refresh the table
+                })
+                .catch(error => {
+                    console.error('Error clearing completed deliveries:', error);
+                    const errorDiv = document.getElementById('error-message');
+                    errorDiv.innerText = 'Error clearing completed deliveries: ' + error.message;
+                    errorDiv.style.display = 'block';
+                });
+        }
+
+        // Fetch immediately on page load
+        fetchOrders();
+        // Auto-refresh orders every 5 seconds
+        setInterval(fetchOrders, 5000);
+    </script>
+</body>
+</html>

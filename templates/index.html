@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV Delivery Robot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script>
+        let isLoggedIn = false;
+        let currentPasscode = '';
+
+        async function signup(event) {
+            event.preventDefault(); // 🆕 Prevent default form submission
+            const email = document.getElementById("signup_email").value;
+            const password = document.getElementById("signup_password").value;
+            const res = await fetch('/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+        }
+
+        async function login(event) {
+            event.preventDefault(); // 🆕 Prevent default form submission
+            const email = document.getElementById("login_email").value;
+            const password = document.getElementById("login_password").value;
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (data.message === "Login successful!") {
+                isLoggedIn = true;
+                updateUI();
+            }
+            alert(data.message || data.error);
+        }
+
+        async function startDelivery() {
+            if (!isLoggedIn) {
+                alert("Please log in first!");
+                return;
+            }
+            const res = await fetch('/start-delivery', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' } // 🆕 Ensure Content-Type
+            });
+            const data = await res.json();
+            currentPasscode = data.passcode;
+            document.getElementById("delivery_status").innerText = `Delivery started! Passcode: ${currentPasscode}`;
+            alert(data.message || data.error);
+        }
+
+        async function verifyPasscode(event) {
+            event.preventDefault(); // 🆕 Prevent default form submission
+            const passcode = document.getElementById("passcode").value;
+            const res = await fetch('/verify-passcode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ passcode })
+            });
+            const data = await res.json();
+            if (data.message === "Correct passcode! Delivery completed!") {
+                document.getElementById("delivery_status").innerText = "Delivery completed!";
+            }
+            alert(data.message || data.error);
+        }
+
+        function updateUI() {
+            document.getElementById("delivery_section").style.display = isLoggedIn ? "block" : "none";
+            document.getElementById("passcode_section").style.display = isLoggedIn ? "block" : "none";
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>EV Delivery Robot</h1>
+        <a href="/admin-login" style="color: white; position: absolute; top: 20px; right: 20px;">Admin Login</a>
+    </header>
+    <main>
+        <div class="container">
+            <div class="card">
+                <h2>Sign Up</h2>
+                <form onsubmit="signup(event)"> <!-- 🆕 Add form with onsubmit -->
+                    <input type="email" id="signup_email" placeholder="Enter Email" required>
+                    <input type="password" id="signup_password" placeholder="Enter Password" required>
+                    <button type="submit">Sign Up</button> <!-- 🆕 Change to type="submit" -->
+                </form>
+            </div>
+            <div class="card">
+                <h2>Login</h2>
+                <form onsubmit="login(event)"> <!-- 🆕 Add form with onsubmit -->
+                    <input type="email" id="login_email" placeholder="Enter Email" required>
+                    <input type="password" id="login_password" placeholder="Enter Password" required>
+                    <button type="submit">Login</button> <!-- 🆕 Change to type="submit" -->
+                </form>
+            </div>
+            <div class="card" id="delivery_section" style="display: none;">
+                <h2>Start Delivery</h2>
+                <button onclick="startDelivery()">Start Delivery</button>
+                <p id="delivery_status" class="status">No delivery yet.</p>
+            </div>
+            <div class="card" id="passcode_section" style="display: none;">
+                <h2>Verify Passcode</h2>
+                <form onsubmit="verifyPasscode(event)"> <!-- 🆕 Add form with onsubmit -->
+                    <input type="text" id="passcode" placeholder="Enter Passcode" required>
+                    <button type="submit">Verify</button> <!-- 🆕 Change to type="submit" -->
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
