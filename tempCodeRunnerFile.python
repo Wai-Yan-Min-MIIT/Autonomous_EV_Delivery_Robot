@@ -1,0 +1,10 @@
+from PIL import Image
+
+# Open the JPG image
+img = Image.open(r"C:\Users\L-72\Wai_yan_folder\programming\Autonomous_ev_delivery_car\programs\ev_delivery_app\static\MIC_Logo.jpg")
+
+# Resize to 256x256 (or other sizes)
+img = img.resize((256, 256), Image.Resampling.LANCZOS)
+
+# Save as ICO
+img.save(r"C:\Users\L-72\Wai_yan_folder\programming\Autonomous_ev_delivery_car\programs\ev_delivery_app\static\MIC_Logo.ico", format="ICO")
